@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
 
-import dynamic from 'next/dynamic'
+import NextDynamic from 'next/dynamic'
 
-const CheckoutContent = dynamic(() => import('./CheckoutContent'), { ssr: false })
+const CheckoutContent = NextDynamic(() => import('./CheckoutContent'), { ssr: false })
 
 export default function CheckoutPage() {
   return <CheckoutContent />
