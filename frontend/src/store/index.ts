@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
 
 interface CartItem {
   product_id: number
@@ -20,51 +19,36 @@ interface CartState {
   totalPrice: () => number
 }
 
-export const useCartStore = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      addItem: (item) => {
-        const existing = get().items.find((i) => i.product_id === item.product_id)
-        if (existing) {
-          set((state) => ({
-            items: state.items.map((i) =>
-              i.product_id === item.product_id
-                ? { ...i, quantity: i.quantity + item.quantity }
-                : i
-            ),
-          }))
-        } else {
-          set((state) => ({ items: [...state.items, item] }))
-        }
-      },
-      removeItem: (product_id) =>
-        set((state) => ({ items: state.items.filter((i) => i.product_id !== product_id) })),
-      updateQuantity: (product_id, quantity) => {
-        if (quantity <= 0) {
-          get().removeItem(product_id)
-          return
-        }
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.product_id === product_id ? { ...i, quantity } : i
-          ),
-        }))
-      },
-      clearCart: () => set({ items: [] }),
-      totalItems: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
-      totalPrice: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
-    }),
-    {
-      name: 'cart-storage',
-      storage: createJSONStorage(() => {
-        if (typeof window !== 'undefined') return localStorage
-        return {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {},
-        }
-      }),
+export const useCartStore = create<CartState>((set, get) => ({
+  items: [],
+  addItem: (item) => {
+    const existing = get().items.find((i) => i.product_id === item.product_id)
+    if (existing) {
+      set((state) => ({
+        items: state.items.map((i) =>
+          i.product_id === item.product_id
+            ? { ...i, quantity: i.quantity + item.quantity }
+            : i
+        ),
+      }))
+    } else {
+      set((state) => ({ items: [...state.items, item] }))
     }
-  )
-)
+  },
+  removeItem: (product_id) =>
+    set((state) => ({ items: state.items.filter((i) => i.product_id !== product_id) })),
+  updateQuantity: (product_id, quantity) => {
+    if (quantity <= 0) {
+      get().removeItem(product_id)
+      return
+    }
+    set((state) => ({
+      items: state.items.map((i) =>
+        i.product_id === product_id ? { ...i, quantity } : i
+      ),
+    }))
+  },
+  clearCart: () => set({ items: [] }),
+  totalItems: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
+  totalPrice: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
+}))
