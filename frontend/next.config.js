@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
-      // Local Django
       {
         protocol: "http",
         hostname: "localhost",
@@ -15,8 +15,6 @@ const nextConfig = {
         port: "8000",
         pathname: "/media/**",
       },
-
-      // Docker (frontend container -> backend container)
       {
         protocol: "http",
         hostname: "backend",
@@ -26,5 +24,4 @@ const nextConfig = {
     ],
   },
 };
-
 module.exports = nextConfig;
