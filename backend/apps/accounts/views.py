@@ -1,0 +1,120 @@
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model, login, authenticate
+from django.http import HttpResponseRedirect
+from django.views import View
+from django.contrib.admin.sites import AdminSite
+
+from .serializers import (
+    RegisterSerializer, UserSerializer,
+    CustomTokenObtainPairSerializer, AddressSerializer
+)
+from .models import Address
+
+User = get_user_model()
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        }, status=status.HTTP_201_CREATED)
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({'error': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ['get', 'patch', 'put']
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True  # always allow partial update
+        return super().update(request, *args, **kwargs)
+
+
+class AddressListCreateView(generics.ListCreateAPIView):
+    serializer_class = AddressSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AddressSerializer
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ['get', 'patch', 'put', 'delete']
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return super().update(request, *args, **kwargs)
+
+
+class AdminLoginBridgeView(APIView):
+    """
+    Receives email+password, authenticates the user as a Django session,
+    then redirects to /admin/ — so staff users land directly in the admin panel.
+    """
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '')
+
+        user = authenticate(request, username=email, password=password)
+
+        if user is None:
+            # Try via username field too
+            try:
+                u = User.objects.get(email=email)
+                user = authenticate(request, username=u.username, password=password)
+            except User.DoesNotExist:
+                pass
+
+        if user is None or not user.is_active:
+            return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.is_staff:
+            return Response({'error': 'You do not have admin access.'}, status=status.HTTP_403_FORBIDDEN)
+
+        login(request, user)
+        return Response({'redirect': '/admin/'}, status=status.HTTP_200_OK)
