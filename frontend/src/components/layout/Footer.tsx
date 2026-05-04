@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Phone, Mail, MapPin, Facebook, Youtube } from 'lucide-react'
 
 export default function Footer() {
@@ -10,8 +11,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-red-600 text-white font-bold text-lg px-3 py-1 rounded-lg">
-                TN
+              <div className="bg-red-600 text-white font-bold text-lg px-1 py-1 rounded-lg">
+                <Image src="/photo/tech-logo.jpg" alt="TechNova" width={40} height={40} />  
               </div>
               <span className="text-white font-bold text-xl">TechNova Mart</span>
             </div>
@@ -100,7 +101,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="text-red-400" />
-                <span>+880 1780732067</span>
+                <span>+880 1410-732067</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail size={16} className="text-red-400" />

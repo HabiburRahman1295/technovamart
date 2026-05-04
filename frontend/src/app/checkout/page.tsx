@@ -1,99 +1,140 @@
-'use client'
-import { useState } from 'react'
-import { useCartStore, useAuthStore } from '@/store'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { authApi, orderApi, paymentApi } from '@/lib/api'
-import { useRouter } from 'next/navigation'
-import toast from 'react-hot-toast'
-import { useForm } from 'react-hook-form'
-import { MapPin, CreditCard, CheckCircle } from 'lucide-react'
+"use client";
+import { useState } from "react";
+import { useCartStore, useAuthStore } from "@/store";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { authApi, orderApi, paymentApi } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { MapPin, CreditCard, CheckCircle } from "lucide-react";
 
-type AddressForm = { name: string; phone: string; city: string; area: string; address_line: string }
+type AddressForm = {
+  name: string;
+  phone: string;
+  city: string;
+  area: string;
+  address_line: string;
+};
 
 export default function CheckoutPage() {
-  const router = useRouter()
-  const { items, totalPrice, clearCart } = useCartStore()
-  const { isAuthenticated } = useAuthStore()
-  const [selectedAddress, setSelectedAddress] = useState<number | null>(null)
-  const [selectedPayment, setSelectedPayment] = useState('bkash')
-  const [showAddressForm, setShowAddressForm] = useState(false)
-  const { register, handleSubmit, reset } = useForm<AddressForm>()
+  const router = useRouter();
+  const { items, totalPrice, clearCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState("cod");
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const { register, handleSubmit, reset } = useForm<AddressForm>();
 
   const { data: addressData, refetch: refetchAddresses } = useQuery({
-    queryKey: ['addresses'],
-    queryFn: () => authApi.getAddresses().then(r => r.data),
+    queryKey: ["addresses"],
+    queryFn: () => authApi.getAddresses().then((r) => r.data),
     enabled: isAuthenticated,
-  })
+  });
 
-  const addresses = addressData?.results || addressData || []
+  const addresses = addressData?.results || addressData || [];
 
   const createAddressMutation = useMutation({
     mutationFn: (data: AddressForm) => authApi.createAddress(data),
     onSuccess: (res) => {
-      setSelectedAddress(res.data.id)
-      refetchAddresses()
-      setShowAddressForm(false)
-      reset()
-      toast.success('Address added!')
+      setSelectedAddress(res.data.id);
+      refetchAddresses();
+      setShowAddressForm(false);
+      reset();
+      toast.success("Address added!");
     },
-  })
+  });
 
   const orderMutation = useMutation({
     mutationFn: (data: any) => orderApi.create(data),
     onSuccess: async (orderRes) => {
-      const order = orderRes.data
+      const order = orderRes.data;
       try {
-        const payRes = await paymentApi.init({ order_id: order.id, provider: selectedPayment })
-        if (selectedPayment === 'bkash' && payRes.data.bkash_url) {
-          window.location.href = payRes.data.bkash_url
+        const payRes = await paymentApi.init({
+          order_id: order.id,
+          provider: selectedPayment,
+        });
+        if (selectedPayment === "bkash" && payRes.data.bkash_url) {
+          window.location.href = payRes.data.bkash_url;
         } else {
-          clearCart()
-          router.push(`/payment/success?order=${order.id}`)
+          clearCart();
+          router.push(`/payment/success?order=${order.id}`);
         }
       } catch {
-        router.push(`/account/orders`)
+        router.push(`/account/orders`);
       }
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || 'Failed to place order')
+      toast.error(err.response?.data?.error || "Failed to place order");
     },
-  })
+  });
 
   if (!isAuthenticated) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <p className="mb-4">Please login to checkout</p>
-        <button onClick={() => router.push('/auth/login')} className="btn-primary">Login</button>
+        <button
+          onClick={() => router.push("/auth/login")}
+          className="btn-primary"
+        >
+          Login
+        </button>
       </div>
-    )
+    );
   }
 
   if (items.length === 0) {
-    router.push('/cart')
-    return null
+    router.push("/cart");
+    return null;
   }
 
-  const subtotal = totalPrice()
-  const shipping = 60
-  const total = subtotal + shipping
+  const subtotal = totalPrice();
+  const shipping = 60;
+  const total = subtotal + shipping;
 
   const handlePlaceOrder = () => {
     if (!selectedAddress) {
-      toast.error('Please select a delivery address')
-      return
+      toast.error("Please select a delivery address");
+      return;
     }
     orderMutation.mutate({
       address_id: selectedAddress,
-      items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-    })
-  }
+      items: items.map((i) => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+      })),
+    });
+  };
 
   const PAYMENT_METHODS = [
-    { id: 'bkash', label: 'bKash', emoji: '🔴', desc: 'Pay with bKash' },
-    { id: 'nagad', label: 'Nagad', emoji: '🟠', desc: 'Pay with Nagad' },
-    { id: 'card', label: 'Card', emoji: '💳', desc: 'Debit / Credit Card' },
-    { id: 'cod', label: 'Cash on Delivery', emoji: '💵', desc: 'Pay on delivery' },
-  ]
+    {
+      id: "bkash",
+      label: "bKash",
+      emoji: "🔴",
+      desc: "Pay with bKash",
+      disabled: true,
+    },
+    {
+      id: "nagad",
+      label: "Nagad",
+      emoji: "🟠",
+      desc: "Pay with Nagad",
+      disabled: true,
+    },
+    {
+      id: "card",
+      label: "Card",
+      emoji: "💳",
+      desc: "Debit / Credit Card",
+      disabled: true,
+    },
+    {
+      id: "cod",
+      label: "Cash on Delivery",
+      emoji: "💵",
+      desc: "Pay on delivery",
+      disabled: false,
+    },
+  ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -107,26 +148,68 @@ export default function CheckoutPage() {
             </h2>
             <div className="space-y-3">
               {addresses.map((addr: any) => (
-                <label key={addr.id} className={`flex gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${selectedAddress === addr.id ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <input type="radio" name="address" value={addr.id} checked={selectedAddress === addr.id} onChange={() => setSelectedAddress(addr.id)} className="mt-1 text-red-600" />
+                <label
+                  key={addr.id}
+                  className={`flex gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${selectedAddress === addr.id ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"}`}
+                >
+                  <input
+                    type="radio"
+                    name="address"
+                    value={addr.id}
+                    checked={selectedAddress === addr.id}
+                    onChange={() => setSelectedAddress(addr.id)}
+                    className="mt-1 text-red-600"
+                  />
                   <div className="text-sm">
-                    <p className="font-medium">{addr.name} · {addr.phone}</p>
-                    <p className="text-gray-500">{addr.address_line}, {addr.area}, {addr.city}</p>
+                    <p className="font-medium">
+                      {addr.name} · {addr.phone}
+                    </p>
+                    <p className="text-gray-500">
+                      {addr.address_line}, {addr.area}, {addr.city}
+                    </p>
                   </div>
                 </label>
               ))}
-              <button onClick={() => setShowAddressForm(!showAddressForm)} className="text-red-600 text-sm font-medium hover:text-red-700">
+              <button
+                onClick={() => setShowAddressForm(!showAddressForm)}
+                className="text-red-600 text-sm font-medium hover:text-red-700"
+              >
                 + Add new address
               </button>
             </div>
             {showAddressForm && (
-              <form onSubmit={handleSubmit(d => createAddressMutation.mutate(d))} className="mt-4 grid grid-cols-2 gap-3">
-                <input {...register('name', { required: true })} placeholder="Full Name *" className="input col-span-2" />
-                <input {...register('phone', { required: true })} placeholder="Phone *" className="input" />
-                <input {...register('city', { required: true })} placeholder="City *" className="input" />
-                <input {...register('area', { required: true })} placeholder="Area *" className="input" />
-                <textarea {...register('address_line', { required: true })} placeholder="Full Address *" className="input col-span-2 resize-none h-20" />
-                <button type="submit" className="btn-primary col-span-2">Save Address</button>
+              <form
+                onSubmit={handleSubmit((d) => createAddressMutation.mutate(d))}
+                className="mt-4 grid grid-cols-2 gap-3"
+              >
+                <input
+                  {...register("name", { required: true })}
+                  placeholder="Full Name *"
+                  className="input col-span-2"
+                />
+                <input
+                  {...register("phone", { required: true })}
+                  placeholder="Phone *"
+                  className="input"
+                />
+                <input
+                  {...register("city", { required: true })}
+                  placeholder="City *"
+                  className="input"
+                />
+                <input
+                  {...register("area", { required: true })}
+                  placeholder="Area *"
+                  className="input"
+                />
+                <textarea
+                  {...register("address_line", { required: true })}
+                  placeholder="Full Address *"
+                  className="input col-span-2 resize-none h-20"
+                />
+                <button type="submit" className="btn-primary col-span-2">
+                  Save Address
+                </button>
               </form>
             )}
           </div>
@@ -137,11 +220,24 @@ export default function CheckoutPage() {
               <CreditCard className="text-red-600" size={20} /> Payment Method
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {PAYMENT_METHODS.map(method => (
-                <label key={method.id} className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${selectedPayment === method.id ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <input type="radio" name="payment" value={method.id} checked={selectedPayment === method.id} onChange={() => setSelectedPayment(method.id)} className="text-red-600" />
+              {PAYMENT_METHODS.map((method) => (
+                <label
+                  key={method.id}
+                  className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${selectedPayment === method.id ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"}`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={method.id}
+                    checked={selectedPayment === method.id}
+                    onChange={() => setSelectedPayment(method.id)}
+                    className="text-red-600"
+                    disabled={method.disabled}
+                  />
                   <div>
-                    <div className="font-medium text-sm">{method.emoji} {method.label}</div>
+                    <div className="font-medium text-sm">
+                      {method.emoji} {method.label}
+                    </div>
                     <div className="text-xs text-gray-500">{method.desc}</div>
                   </div>
                 </label>
@@ -155,10 +251,17 @@ export default function CheckoutPage() {
           <div className="card p-6 sticky top-24">
             <h2 className="font-bold text-lg mb-4">Order Summary</h2>
             <div className="space-y-2 text-sm mb-4">
-              {items.map(item => (
-                <div key={item.product_id} className="flex justify-between gap-2">
-                  <span className="text-gray-600 line-clamp-1">{item.product_name} ×{item.quantity}</span>
-                  <span className="shrink-0">৳{(item.price * item.quantity).toLocaleString()}</span>
+              {items.map((item) => (
+                <div
+                  key={item.product_id}
+                  className="flex justify-between gap-2"
+                >
+                  <span className="text-gray-600 line-clamp-1">
+                    {item.product_name} ×{item.quantity}
+                  </span>
+                  <span className="shrink-0">
+                    ৳{(item.price * item.quantity).toLocaleString()}
+                  </span>
                 </div>
               ))}
             </div>
@@ -182,11 +285,11 @@ export default function CheckoutPage() {
               className="btn-primary w-full mt-6 py-3 flex items-center justify-center gap-2 disabled:opacity-70"
             >
               <CheckCircle size={18} />
-              {orderMutation.isPending ? 'Processing...' : 'Place Order'}
+              {orderMutation.isPending ? "Processing..." : "Place Order"}
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

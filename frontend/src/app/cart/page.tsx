@@ -1,24 +1,24 @@
-'use client'
-import { useCartStore } from '@/store'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react'
+"use client";
+import { useCartStore } from "@/store";
+import Image from "next/image";
+import Link from "next/link";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } =
-    useCartStore()
+    useCartStore();
 
   // ✅ Media base URL (from .env.local)
   const MEDIA_BASE =
-    process.env.NEXT_PUBLIC_MEDIA_BASE_URL || 'http://localhost:8000'
+    process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "http://localhost:8000";
 
   // ✅ Convert relative media path -> absolute URL
   const toMediaUrl = (url?: string | null) => {
-    if (!url) return null
-    if (url.startsWith('http')) return url
-    if (url.startsWith('/')) return `${MEDIA_BASE}${url}`
-    return `${MEDIA_BASE}/${url}`
-  }
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    if (url.startsWith("/")) return `${MEDIA_BASE}${url}`;
+    return `${MEDIA_BASE}/${url}`;
+  };
 
   if (items.length === 0) {
     return (
@@ -26,16 +26,19 @@ export default function CartPage() {
         <ShoppingBag className="mx-auto mb-4 text-gray-300" size={80} />
         <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
         <p className="text-gray-500 mb-6">You have no items in your cart</p>
-        <Link href="/products" className="btn-primary inline-flex items-center gap-2">
+        <Link
+          href="/products"
+          className="btn-primary inline-flex items-center gap-2"
+        >
           Start Shopping <ArrowRight size={18} />
         </Link>
       </div>
-    )
+    );
   }
 
-  const shipping = 60
-  const subtotal = totalPrice()
-  const total = subtotal + shipping
+  const shipping = 80;
+  const subtotal = totalPrice();
+  const total = subtotal + shipping;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -46,7 +49,7 @@ export default function CartPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => {
-            const imgSrc = toMediaUrl(item.image)
+            const imgSrc = toMediaUrl(item.image);
 
             return (
               <div key={item.product_id} className="card p-4 flex gap-4">
@@ -121,7 +124,7 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
 
           <button
@@ -173,5 +176,5 @@ export default function CartPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

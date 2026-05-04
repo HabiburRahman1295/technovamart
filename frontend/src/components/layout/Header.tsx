@@ -1,7 +1,8 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import {
   ShoppingCart,
   Search,
@@ -12,52 +13,62 @@ import {
   Phone,
   LayoutDashboard,
   ChevronRight,
-} from 'lucide-react'
-import { useCartStore, useAuthStore } from '@/store'
-import { useRouter } from 'next/navigation'
+} from "lucide-react";
+import { useCartStore, useAuthStore } from "@/store";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [accountOpen, setAccountOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const totalItems = useCartStore((s) => s.totalItems)
-  const { user, isAuthenticated, logout } = useAuthStore()
-  const router = useRouter()
+  const cartItems = useCartStore((s) => s.items);
+  const cartTotalItems = useCartStore((s) => s.totalItems);
+  const hasHydrated = useCartStore((s) => s._hasHydrated);
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const router = useRouter();
 
-  const accountRef = useRef<HTMLDivElement | null>(null)
+  // ✅ Ensure component only renders after hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const totalItems = isMounted && hasHydrated ? cartTotalItems() : 0;
+
+  const accountRef = useRef<HTMLDivElement | null>(null);
 
   // ✅ Close account dropdown when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (!accountRef.current) return
+      if (!accountRef.current) return;
       if (!accountRef.current.contains(e.target as Node)) {
-        setAccountOpen(false)
+        setAccountOpen(false);
       }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setMenuOpen(false)
+    e.preventDefault();
+    setMenuOpen(false);
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      router.push('/products')
+      router.push("/products");
     }
-  }
+  };
 
   const NAV_CATEGORIES = [
-    { name: 'Smartphone', slug: 'smartphone' },
-    { name: 'Laptop', slug: 'laptop' },
-    { name: 'Tablet', slug: 'tablet' },
-    { name: 'Earbuds', slug: 'earbuds' },
-    { name: 'Smartwatch', slug: 'smartwatch' },
-    { name: 'Gaming', slug: 'gaming' },
-    { name: 'Accessories', slug: 'accessories' },
-  ]
+    { name: "Smartphone", slug: "smartphone" },
+    { name: "Laptop", slug: "laptop" },
+    { name: "Tablet", slug: "tablet" },
+    { name: "Earbuds", slug: "earbuds" },
+    { name: "Smartwatch", slug: "smartwatch" },
+    { name: "Gaming", slug: "gaming" },
+    { name: "Accessories", slug: "accessories" },
+  ];
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -65,7 +76,7 @@ export default function Header() {
       <div className="bg-red-600 text-white text-xs py-1.5 px-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <span className="flex items-center gap-1">
-            <Phone size={12} /> Hotline: 01780-732067
+            <Phone size={12} /> Hotline: 01410732067
           </span>
           <span>🚀 Same-day delivery in Dhaka!</span>
         </div>
@@ -75,11 +86,18 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="bg-red-600 text-white font-bold text-lg px-3 py-1 rounded-lg">
-            TN
+          <div className="bg-red-600 text-white font-bold text-lg px-1 py-1 rounded-lg">
+            <Image
+              src="/photo/tech-logo.jpg"
+              alt="TechNova"
+              width={40}
+              height={40}
+            />
           </div>
           <div className="hidden sm:block">
-            <div className="font-bold text-gray-900 leading-tight">TechNova</div>
+            <div className="font-bold text-gray-900 leading-tight">
+              TechNova
+            </div>
             <div className="text-xs text-gray-500 leading-tight">Mart</div>
           </div>
         </Link>
@@ -105,16 +123,15 @@ export default function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          
           <Link
             href="/cart"
             className="flex flex-col items-center text-gray-600 hover:text-red-600 transition relative"
           >
             <ShoppingCart size={22} />
             <span className="text-xs mt-0.5">Cart</span>
-            {totalItems() > 0 && (
+            {totalItems > 0 && (
               <span className="absolute -top-1 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {totalItems()}
+                {totalItems}
               </span>
             )}
           </Link>
@@ -165,9 +182,9 @@ export default function Header() {
                   <div className="border-t mt-1">
                     <button
                       onClick={() => {
-                        logout()
-                        setAccountOpen(false)
-                        router.push('/')
+                        logout();
+                        setAccountOpen(false);
+                        router.push("/");
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                       type="button"
@@ -202,9 +219,6 @@ export default function Header() {
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
             <span className="text-sm font-medium">All Categories</span>
           </button>
-
-          
-          
         </div>
 
         {/* ✅ Beautiful dropdown under All Categories */}
@@ -223,8 +237,12 @@ export default function Header() {
                   {/* header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
                     <div>
-                      <p className="font-semibold leading-tight">Browse Categories</p>
-                      <p className="text-xs text-gray-500">Choose a category to explore products</p>
+                      <p className="font-semibold leading-tight">
+                        Browse Categories
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Choose a category to explore products
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -274,5 +292,5 @@ export default function Header() {
         )}
       </nav>
     </header>
-  )
+  );
 }
