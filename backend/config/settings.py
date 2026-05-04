@@ -182,13 +182,13 @@ JAZZMIN_SETTINGS = {
 
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "Website", "url": "http://localhost:3000", "new_window": True},
+        {"name": "Website", "url": "https://technovamartbd.com/", "new_window": True},
         {"model": "catalog.Product"},
         {"model": "orders.Order"},
     ],
 
     "usermenu_links": [
-        {"name": "Website", "url": "http://localhost:3000", "new_window": True},
+        {"name": "Website", "url": "https://technovamartbd.com/", "new_window": True},
         {"model": "auth.user"},
     ],
 
