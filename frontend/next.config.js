@@ -24,6 +24,8 @@ const nextConfig = {
         pathname: "/media/**",
       },
     ],
+    // Allow all local public images
+    unoptimized: process.env.NODE_ENV === "production",
   },
 };
 
