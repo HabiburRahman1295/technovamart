@@ -5,6 +5,8 @@ from .models import Category, Brand, Product, ProductImage, Banner
 class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
     product_count = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -12,15 +14,32 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_children(self, obj):
         if obj.children.exists():
-            return CategorySerializer(obj.children.filter(is_active=True), many=True).data
+            return CategorySerializer(obj.children.filter(is_active=True), many=True, context=self.context).data
         return []
 
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
 
+    def get_image(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+    def get_icon(self, obj):
+        if obj.icon:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.icon.url)
+            return obj.icon.url
+        return None
+
 
 class BrandSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
 
     class Meta:
         model = Brand
@@ -29,9 +48,17 @@ class BrandSerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
 
+    def get_logo(self, obj):
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    # ✅ always return relative URL like /media/...
+    # ✅ return absolute URL to avoid double slashes
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -40,6 +67,9 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image_url:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image_url.url)
             return obj.image_url.url
         return None
 
@@ -60,7 +90,10 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_primary_image(self, obj):
         img = obj.images.filter(is_primary=True).first() or obj.images.first()
         if img and img.image_url:
-            # ✅ return /media/... (no localhost)
+            # ✅ return absolute URL to avoid double slashes in production
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(img.image_url.url)
             return img.image_url.url
         return None
 
@@ -81,7 +114,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class BannerSerializer(serializers.ModelSerializer):
-    # ✅ always return relative URL like /media/...
+    # ✅ return absolute URL to avoid double slashes
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -90,5 +123,8 @@ class BannerSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image_url:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image_url.url)
             return obj.image_url.url
         return None
