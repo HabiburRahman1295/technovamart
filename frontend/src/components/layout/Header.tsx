@@ -121,7 +121,7 @@ export default function Header() {
             {/* Cart badge on mobile */}
             <Link
               href="/cart"
-              className="relative flex items-center text-gray-600 hover:text-red-600 transition"
+              className="relative flex items-center text-gray-600 hover:text-red-600 transition shrink-0"
             >
               <ShoppingCart size={20} />
               {totalItems > 0 && (
@@ -130,6 +130,74 @@ export default function Header() {
                 </span>
               )}
             </Link>
+
+            {/* Mobile Account/Login Button - Added to header row */}
+            <div className="relative shrink-0" ref={accountRef}>
+              {isAuthenticated ? (
+                <button
+                  className="text-gray-600 hover:text-red-600 transition p-1"
+                  type="button"
+                  onClick={() => setAccountOpen((v) => !v)}
+                >
+                  <User size={20} />
+                </button>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="text-gray-600 hover:text-red-600 transition p-1"
+                >
+                  <User size={20} />
+                </Link>
+              )}
+
+              {accountOpen && isAuthenticated && (
+                <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg w-44 py-2 border z-50">
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b truncate">
+                    {user?.email}
+                  </div>
+
+                  <Link
+                    href="/account/profile"
+                    className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    <User size={14} /> Profile
+                  </Link>
+
+                  <Link
+                    href="/account/orders"
+                    className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    <ShoppingCart size={14} /> Orders
+                  </Link>
+
+                  {(user as any)?.is_staff && (
+                    <Link
+                      href="/admin-login"
+                      className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 text-red-600 font-medium"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <LayoutDashboard size={14} /> Admin
+                    </Link>
+                  )}
+
+                  <div className="border-t mt-1">
+                    <button
+                      onClick={() => {
+                        logout();
+                        setAccountOpen(false);
+                        router.push("/");
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-gray-50"
+                      type="button"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Desktop Layout - Horizontal on large screens */}
@@ -187,7 +255,11 @@ export default function Header() {
               </Link>
 
               {isAuthenticated ? (
-                <div className="relative" ref={accountRef}>
+                <div
+                  className="relative"
+                  ref={accountRef}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     className="flex flex-col items-center text-gray-600 hover:text-red-600 transition"
                     type="button"
@@ -257,75 +329,7 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Mobile Account/Login Button */}
-          <div className="md:hidden">
-            {isAuthenticated ? (
-              <div className="relative" ref={accountRef}>
-                <button
-                  className="text-gray-600 hover:text-red-600 transition p-1"
-                  type="button"
-                  onClick={() => setAccountOpen((v) => !v)}
-                >
-                  <User size={20} />
-                </button>
-
-                {accountOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg w-44 py-2 border z-50">
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b truncate">
-                      {user?.email}
-                    </div>
-
-                    <Link
-                      href="/account/profile"
-                      className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50"
-                      onClick={() => setAccountOpen(false)}
-                    >
-                      <User size={14} /> Profile
-                    </Link>
-
-                    <Link
-                      href="/account/orders"
-                      className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50"
-                      onClick={() => setAccountOpen(false)}
-                    >
-                      <ShoppingCart size={14} /> Orders
-                    </Link>
-
-                    {(user as any)?.is_staff && (
-                      <Link
-                        href="/admin-login"
-                        className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 text-red-600 font-medium"
-                        onClick={() => setAccountOpen(false)}
-                      >
-                        <LayoutDashboard size={14} /> Admin
-                      </Link>
-                    )}
-
-                    <div className="border-t mt-1">
-                      <button
-                        onClick={() => {
-                          logout();
-                          setAccountOpen(false);
-                          router.push("/");
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-gray-50"
-                        type="button"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/auth/login"
-                className="text-gray-600 hover:text-red-600 transition p-1"
-              >
-                <User size={20} />
-              </Link>
-            )}
-          </div>
+          {/* Mobile Account/Login Button - REMOVED (now in header row above) */}
         </div>
       </div>
 
@@ -351,14 +355,18 @@ export default function Header() {
           {/* ✅ Beautiful dropdown under Categories - Fully Responsive */}
           {menuOpen && (
             <>
-              {/* overlay */}
+              {/* overlay - only block clicks under the header */}
               <div
-                className="fixed inset-0 bg-black/30 z-40"
+                className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 z-40"
                 onClick={() => setMenuOpen(false)}
+                style={{ pointerEvents: menuOpen ? "auto" : "none" }}
               />
 
               {/* dropdown container */}
-              <div className="absolute left-0 top-full w-full z-50">
+              <div
+                className="absolute left-0 top-full w-full z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="px-4">
                   <div className="max-w-7xl mx-auto bg-white text-gray-900 rounded-2xl shadow-xl border border-gray-200 overflow-hidden mt-2 animate-in fade-in zoom-in-95 duration-150">
                     {/* header */}

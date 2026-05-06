@@ -88,7 +88,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = totalPrice();
-  const shipping = 60;
+  const shipping = 80;
   const total = subtotal + shipping;
 
   const handlePlaceOrder = () => {
