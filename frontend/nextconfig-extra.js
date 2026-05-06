@@ -15,6 +15,7 @@ const nextConfig = {
         port: "8000",
         pathname: "/media/**",
       },
+
       // Docker (frontend container -> backend container)
       {
         protocol: "http",
@@ -22,13 +23,9 @@ const nextConfig = {
         port: "8000",
         pathname: "/media/**",
       },
-      // Production API domain
-      {
-        protocol: "https",
-        hostname: "api.technovamartbd.com",
-        pathname: "/media/**",
-      },
     ],
+    // Allow all local public images
+    unoptimized: process.env.NODE_ENV === "production",
   },
 };
 
